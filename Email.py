@@ -16,7 +16,7 @@ class EnviaEmail:
         self.receiver_email = receiver_email
 
         self.message = MIMEMultipart("alternative")
-        self.message["Subject"] = "multipart test"
+        self.message["Subject"] = "Relatorio de Investimentos"
         self.message["From"] = self.sender_email
         self.message["To"] = self.receiver_email
 
@@ -38,6 +38,8 @@ class EnviaEmail:
 
     # Save SVG in a fake file object.
     def insere_imagem(self, lista_imagens):
+        Log.informacao('chamando metodo EnviaEmail.insere_imagem()')
+
         for x in lista_imagens:
             with open(x, 'rb') as f:
                 content = MIMEImage(f.read(), _subtype='png')

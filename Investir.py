@@ -1,5 +1,5 @@
 import json
-import logging, coloredlogs, os.path
+import logging,coloredlogs, os.path
 from datetime import date, datetime
 
 from googleapiclient.discovery import build
@@ -23,9 +23,10 @@ class Log:
 
 class DadosExternos():
     @staticmethod
-    def cria_lista_Investimentos(lista):
+    def cria_lista_Investimentos(lista_de_listas):
+        Log.informacao('chamando metodo DadosExternos().cria_lista_Investimentos')
         lista_investimentos = []
-        for x in lista:
+        for x in lista_de_listas:
             nome = str(x[0]).strip()
             tipo = str(x[1]).strip()
             valor_inicio = x[4]
@@ -96,8 +97,8 @@ class Historico():
         Log.informacao('chamando metodo Historico().atualiza_dados')
         objetos = []
         for y in self.lista_investimentos:
-            # Log.informacao(f'Investimento incluido - nome: {y.nome}, tipo: {y.tipo}, data_inicial: {y.data_inicio_investimento}'
-            #       f'valor: {y.valor}, dados_atuais: {y.dicionario_dados}')
+            Log.informacao(f'Investimento incluido - nome: {y.nome}, tipo: {y.tipo}, data_inicial: {y.data_inicio_investimento}'
+                   f'valor: {y.valor}, dados_atuais: {y.dicionario_dados}')
             obj = {'nome': y.nome,
                    'tipo': y.tipo,
                    'data_inicial': y.data_inicio_investimento,
@@ -120,6 +121,34 @@ class Historico():
             objetos.append(obj)
         self.__json_escrever(self.json_file_historico,objetos)
 
+    def novo_investimento(self,json_historico, lista_externa):
+        Log.informacao('chamando metodo Historico().novo_investimento')
+        novos_investimentos = []
+        lista_apoio_e = []
+        lista_apoio_i = []
+        lista_novos_investimentos = []
+        hist = self.__json_ler(json_historico)
+
+        for l_ext in lista_externa:
+            lista_apoio_e.append(l_ext[0])
+        for inv in hist:
+            lista_apoio_i.append(inv['nome'])
+
+        for x in lista_apoio_e:
+            if x not in lista_apoio_i:
+                for y in lista_externa:
+                    if y[0] == x:
+                        lista_novos_investimentos.append(y)
+                        lista_nova = DadosExternos.cria_lista_Investimentos(lista_novos_investimentos)
+                        for inv in lista_nova:
+                            obj = {'nome': inv.nome, 'tipo': inv.tipo,
+                                   'data_inicial': inv.data_inicio_investimento,
+                                   'valor_inicial': inv.valor,
+                                   'dados_atuais': inv.dicionario_dados}
+                            novos_investimentos.append(obj)
+                            Log.informacao(f'Historico().novo_investimento {obj}')
+        return novos_investimentos
+
     def atualiza_dados_historico(self, json_historico, lista_externa):
         Log.informacao('chamando metodo Historico().atualiza_dados_historico')
         objetos = []
@@ -127,6 +156,12 @@ class Historico():
         if hist is not None:
             #atualiza lista de investimentos
             hoje = date.today().strftime("%d/%m/%Y")
+
+            # pesquisa por novos investimentos
+            for novo_inv in self.novo_investimento(json_historico, lista_externa):
+                objetos.append(novo_inv)
+
+            #atualiza os ja existentes
             for dict_h in hist:
                 dict_dados_atuais = dict_h['dados_atuais']
                 for y in lista_externa:
