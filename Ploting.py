@@ -17,6 +17,7 @@ class Plot():
         dados_atuais = {}
         lista_x = []
         ctrl_tam = 0
+        max = 0
         matplotlib.pyplot.figure(figsize=(14, 7))
 
         # novo dicionario com tamanho do dicionario dados atuais para cada invetimento
@@ -55,6 +56,7 @@ class Plot():
             apoio = []
             for k, v in x['dados_atuais'].items():
                 apoio.append(v)
+                max = (v + 1000) if max < v else max
                 if k not in lista_x:
                     lista_x.append(k)
             dicionario[x['nome']] = apoio
@@ -70,12 +72,13 @@ class Plot():
             matplotlib.pyplot.xlabel('Periodo', horizontalalignment='right')
             matplotlib.pyplot.ylabel('Valor em R$')
             matplotlib.pyplot.xticks(rotation=75)
+            matplotlib.pyplot.ylim(0,max)
             matplotlib.pyplot.legend()
             matplotlib.pyplot.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=7)
             matplotlib.pyplot.tight_layout()
             matplotlib.pyplot.grid(True)
             matplotlib.pyplot.savefig('investimentos.png')
-            # matplotlib.pyplot.show()
+            #matplotlib.pyplot.show()
             matplotlib.pyplot.close()
             lista_imagens.append('investimentos.png')
         return lista_imagens
@@ -85,6 +88,7 @@ class Plot():
         colors_list = list(colors._colors_full_map.values())
         lista_imagens = []
         for x in self.lista_investimentos:
+            matplotlib.pyplot.figure(figsize=(14, 7))
             data = []
             valor = []
             nome = x['nome']

@@ -6,7 +6,7 @@ from datetime import date
 from Investir import Log
 
 class EnviaEmail:
-    def __init__(self,sender_email,receiver_email,password):
+    def __init__(self,sender_email,receiver_email,password, conteudo):
         self.port = 465  # For SSL
         self.password = password
         # Create a secure SSL context
@@ -14,6 +14,7 @@ class EnviaEmail:
 
         self.sender_email = sender_email
         self.receiver_email = receiver_email
+        self.conteudo = self._formata_conteudo(conteudo)
 
         self.message = MIMEMultipart("alternative")
         self.message["Subject"] = "Relatorio de Investimentos"
@@ -27,8 +28,9 @@ class EnviaEmail:
           <body>
             <p>  
                 <h1 style="color: #5e9ca0;"> Alerta de email </h1>
-                Olá meu Caro,
-                segue seu relatorio de investimentos para hoje {date.today().strftime('%d/%m/%Y')}<br> 
+                <br>Olá meu Caro,</br>
+                <br>segue seu relatorio de investimentos de {date.today().strftime('%d/%m/%Y')}</br>
+                <br><br>{self.conteudo}</br>
             </p>
           </body>
         </html>
@@ -36,10 +38,11 @@ class EnviaEmail:
         self.part1 = MIMEText(self.html, 'html')
         self.message.attach(self.part1)
 
-    # Save SVG in a fake file object.
+    def _formata_conteudo(self,conteudo):
+        return str(conteudo).replace('\n','<br>').replace('\t','&emsp;')
+
     def insere_imagem(self, lista_imagens):
         Log.informacao('chamando metodo EnviaEmail.insere_imagem()')
-
         for x in lista_imagens:
             with open(x, 'rb') as f:
                 content = MIMEImage(f.read(), _subtype='png')
@@ -47,6 +50,7 @@ class EnviaEmail:
                 self.message.attach(content)
 
     def envia(self):
+        Log.informacao('chamando metodo EnviaEmail.envia()')
         with smtplib.SMTP_SSL("smtp.gmail.com", self.port, context=self.context) as server:
             server.login(self.sender_email, self.password)
             server.sendmail(

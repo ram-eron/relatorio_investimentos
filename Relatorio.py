@@ -1,5 +1,5 @@
 import datetime
-import json, time
+import json,time
 
 from Investir import Log, Sheet, Historico
 from Ploting import Plot
@@ -26,11 +26,14 @@ end_email_envio = ''  # endereço de email (gmail) que enviará
 senha_envio = ''  # senha para logar na caixa de email do google
 end_email_recebe = ''  # endereco do destino
 COLOR = 3
+
 hora_programada = ['08:00', '09:00', '10:00', '11:00', '11:50']
 hora_envio = '12:00'
+conteudo = ""
 
 def atualiza():
     global hora_programada
+    global conteudo
     try:
         momento_execucao = datetime.datetime.now().strftime('%H:%M')
         if momento_execucao in hora_programada:
@@ -41,7 +44,8 @@ def atualiza():
             relatorio = Historico(l_sheet, JSON_FILE, JSON_FILE_HIST)
             relatorio.atualiza_dados()
             relatorio.atualiza_dados_historico(JSON_FILE_HIST, l_sheet)
-            hora_programada = ['08:00', '09:00', '10:00', '11:00', '11:58']
+            conteudo = relatorio.rendimentos_str(JSON_FILE_HIST)
+            hora_programada = ['08:00', '09:00', '10:00', '11:00', '11:50']
     except Exception as erro:
         Log.informacao(f'houve erro na execuçaõ do metodo atualiza(), {erro}')
         hora_programada.append(adiciona_horario())
@@ -53,7 +57,7 @@ def relatorios():
         momento_execucao = datetime.datetime.now().strftime('%H:%M')
         if momento_execucao == hora_envio:
             Log.informacao('iniciando tratativa para envio do email')
-            email = EnviaEmail(end_email_envio, end_email_recebe, senha_envio)
+            email = EnviaEmail(end_email_envio, end_email_recebe, senha_envio, conteudo)
             email.insere_imagem(plt.plot_todos())
             email.insere_imagem(plt.plot())
             email.envia()

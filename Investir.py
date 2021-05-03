@@ -1,4 +1,5 @@
 import json
+import locale
 import logging,coloredlogs, os.path
 from datetime import date, datetime
 
@@ -8,18 +9,21 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
 class Log:
-    dt = datetime.now().strftime('%d/%m/%Y %H:%M')
+    logging.basicConfig(filename='investimentos.log')
+
     @staticmethod
     def informacao(msg):
+        dt = datetime.now().strftime('%d/%m/%Y %H:%M')
         logging.disable(20)
         logging.addLevelName(21,'MY_INFO')
         coloredlogs.install()
-        logging.log(21,f'{Log.dt} - {msg}')
+        logging.log(21,f'{dt} - {msg}')
 
     @staticmethod
     def excecao(msg):
+        dt = datetime.now().strftime('%d/%m/%Y %H:%M')
         coloredlogs.install()
-        logging.exception(f'{Log.dt} - {msg}')
+        logging.exception(f'{dt} - {msg}')
 
 class DadosExternos():
     @staticmethod
@@ -180,6 +184,35 @@ class Historico():
         else:
             Log.informacao(f'nao ha arquivo {json_historico}')
             self.__inicializa_json_hist()
+
+    def rendimentos_str(self,json_historico):
+        Log.informacao('chamando metodo Historico().rendimentos_str()')
+        locale.setlocale(locale.LC_MONETARY, 'pt_BR.UTF-8')
+        total = 0
+        rendimento_dia = 0
+        dict_rend = {}
+        destaques = {}
+        positivos = ""
+        negativos = ""
+        Log.informacao('iniciando o tratamento dos dados')
+        rend = self.__json_ler(json_historico)
+        for r in rend:
+            dict_rend[r['nome']] = list(r['dados_atuais'].values())
+        for k, v in dict_rend.items():
+            total += v[-1]
+            apoio_rend = v[-1] - v[-2]
+            rendimento_dia += apoio_rend
+            destaques[k] = apoio_rend
+
+        for k, v in destaques.items():
+            if v > 0:
+                positivos += f'\n\t{k}: {locale.currency(v)} '
+            elif v < 0:
+                negativos += f'\n\t{k}: {locale.currency(v)}'
+
+        return f'Total investido: {locale.currency(total)}\n' \
+               f'Seu rendimento hoje foi de: {locale.currency(rendimento_dia)}' \
+               f'\n\nDestaques positivos: {positivos}\nDestaques negativos: {negativos}'
 
 class Sheet():
     def __init__(self,token_json,credentials_json,sheet_id,range_name,sheet_url):
